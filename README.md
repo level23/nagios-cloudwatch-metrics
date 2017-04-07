@@ -2,7 +2,7 @@
 
 This plugin allows you to check certain AWS Cloudwatch metrics and set alerts on certain values.
  
-The script is written in bash. 
+The script is written in bash. It is tested on OSX and Ubuntu 16.04. 
 
 This plugin fetches the data from X minutes back until now. 
 
@@ -17,7 +17,6 @@ We assume that the user who execute this script has configured his account so th
 
 If not, please do this first. See here for more info: 
 http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
-
 
 ### Parameters ###
 
@@ -62,8 +61,14 @@ See the help message:
 
 ### Installation ###
 
-To make use of this plugin, you should add the script to your plugins directory. Then you should 
-define a command to your nagios configuration. Example commands:
+To make use of this plugin, you should checkout this script in your nagios plugins directory. 
+
+```bash
+cd /usr/lib/nagios/plugins/
+git clone https://github.com/level23/nagios-cloudwatch-metrics.git
+```
+
+Then you should define a command to your nagios configuration. Example commands:
 
 ```
 #
@@ -74,18 +79,42 @@ define a command to your nagios configuration. Example commands:
 # $ARG4$: Critical value
 define command {
 	command_name	check_aws_firehose
-	command_line	$USER1$/check_cloudwatch.sh --region=eu-west-1 --namespace="Firehose" --metric="$ARG1$" --statistics="Average" --mins=15 --dimensions="Name=DeliveryStreamName,Value=$ARG2$" --warning=$ARG3$ --critical=$ARG4$
+	command_line	$USER1$/nagios-cloudwatch-metrics/check_cloudwatch.sh --region=eu-west-1 --namespace="Firehose" --metric="$ARG1$" --statistics="Average" --mins=15 --dimensions="Name=DeliveryStreamName,Value=$ARG2$" --warning=$ARG3$ --critical=$ARG4$
 }
 
 #
 # Check check_aws_lambda
-# $ARG1$: Metric, for example: IncomingBytes
-# $ARG2$: DeliveryStreamName
+# $ARG1$: Metric, for example: Duration
+# $ARG2$: FunctionName
 # $ARG3$: Warning value
 # $ARG4$: Critical value
 define command {
 	command_name	check_aws_lambda
-	command_line	$USER1$/check_cloudwatch.sh --region=eu-west-1 --namespace="Lambda" --metric="$ARG1$" --statistics="Average" --mins=15 --dimensions="Name=FunctionName,Value=$ARG2$" --warning=$ARG3$ --critical=$ARG4$
+	command_line	$USER1$/nagios-cloudwatch-metrics/check_cloudwatch.sh --region=eu-west-1 --namespace="Lambda" --metric="$ARG1$" --statistics="Average" --mins=15 --dimensions="Name=FunctionName,Value=$ARG2$" --warning=$ARG3$ --critical=$ARG4$
+}
+
+
+#
+# Check check_aws_sqs
+# $ARG1$: Metric, for example: NumberOfMessagesReceived
+# $ARG2$: QueueName
+# $ARG3$: Warning value
+# $ARG4$: Critical value
+define command {
+	command_name	check_aws_sqs
+	command_line	$USER1$/nagios-cloudwatch-metrics/check_cloudwatch.sh --region=eu-west-1 --namespace="SQS" --metric="$ARG1$" --statistics="Sum" --mins=15 --dimensions="Name=QueueName,Value=$ARG2$" --warning=$ARG3$ --critical=$ARG4$
+}
+
+
+#
+# Check check_aws_sns
+# $ARG1$: Metric, for example: NumberOfNotificationsFailed
+# $ARG2$: TopicName
+# $ARG3$: Warning value
+# $ARG4$: Critical value
+define command {
+	command_name	check_aws_sns
+	command_line	$USER1$/nagios-cloudwatch-metrics/check_cloudwatch.sh --region=eu-west-1 --namespace="SNS" --metric="$ARG1$" --statistics="Sum" --mins=15 --dimensions="Name=TopicName,Value=$ARG2$" --warning=$ARG3$ --critical=$ARG4$
 }
 ```
 
@@ -125,4 +154,6 @@ define service {
         notification_interval       30
         check_command               check_aws_lambda!Duration!myFunction!0:60000!0:120000
 }
+
+# etc.
 ```
