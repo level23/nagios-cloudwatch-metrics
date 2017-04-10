@@ -324,37 +324,44 @@ verbose "";
 
 verbose "Metric value: ${METRIC_VALUE}";
 
+
+MESSAGE=""
 if [[ "${CRITICAL_MIN}" != "0" ]] && [[ 1 -eq "$(echo "${METRIC_VALUE} < ${CRITICAL_MIN}" | bc)" ]]; then
-    verbose "Critical: ${METRIC_VALUE} < ${CRITICAL_MIN}"
+    MESSAGE="Critical: ${METRIC_VALUE} < ${CRITICAL_MIN}"
     EXIT=${STATE_CRITICAL};
 elif [[ "${CRITICAL_MAX}" != "0" ]] && [[ 1 -eq "$(echo "${METRIC_VALUE} > ${CRITICAL_MAX}" | bc)" ]]; then
-    verbose "Critical: ${METRIC_VALUE} > ${CRITICAL_MAX}"
+    MESSAGE="Critical: ${METRIC_VALUE} > ${CRITICAL_MAX}"
     EXIT=${STATE_CRITICAL};
 elif [[ "${WARNING_MIN}" != "0" ]] && [[ 1 -eq "$(echo "${METRIC_VALUE} < ${WARNING_MIN}" | bc)" ]]; then
-    verbose "Critical: ${METRIC_VALUE} < ${WARNING_MIN}"
+    MESSAGE="Warning: ${METRIC_VALUE} < ${WARNING_MIN}"
     EXIT=${STATE_WARNING};
 elif [[ "${WARNING_MAX}" != "0" ]] && [[ 1 -eq "$(echo "${METRIC_VALUE} > ${WARNING_MAX}" | bc)" ]]; then
-    verbose "Critical: ${METRIC_VALUE} > ${WARNING_MAX}"
+    MESSAGE="Warning: ${METRIC_VALUE} > ${WARNING_MAX}"
     EXIT=${STATE_WARNING};
 else
+    MESSAGE="All ok. "
     EXIT=${STATE_OK};
 fi
 
+BODY="${DIMENSIONS} ${METRIC} (${MINUTES} min ${STATISTICS}): ${METRIC_VALUE} ${UNIT} - ${MESSAGE}"
+
+verbose "${BODY}"
+
 case ${EXIT} in
   $STATE_OK)
-    echo "OK - $DIMENSIONS $METRIC (${MINUTES} min $STATISTICS): ${METRIC_VALUE} $UNIT"
+    printf "OK - ${BODY}"
     exit ${EXIT}
     ;;
   $STATE_WARNING)
-    echo "WARNING - $DIMENSIONS $METRIC (${MINUTES} min $STATISTICS): ${METRIC_VALUE} $UNIT"
+    echo "WARNING - ${BODY}"
     exit ${EXIT}
     ;;
   $STATE_CRITICAL)
-    echo "CRITICAL - $DIMENSIONS $METRIC (${MINUTES} min $STATISTICS): ${METRIC_VALUE} $UNIT"
+    echo "CRITICAL - ${BODY}"
     exit ${EXIT}
     ;;
   *)
-    echo "UNKNOWN - $DIMENSIONS $METRIC (${MINUTES} min $STATISTICS): ${METRIC_VALUE} $UNIT"
+    echo "UNKNOWN - ${BODY}"
     exit ${STATE_UNKNOWN};
     ;;
 esac
