@@ -59,6 +59,20 @@ See the help message:
                      
 ```
 
+### AWS Credentials ###
+
+This plugin uses the AWS Command Line Interface to retrieve the metrics data from Amazon. To make this plugin work you 
+should make sure that the user who execute's this plugin can use the Amazon CLI.
+  
+The AWS CLI will automatically search for your credentials (access key id and secret access key) in a few places. 
+See also here: http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#config-settings-and-precedence
+  
+I would suggest that you add the credentials in a file like `~/.aws/credentials`, where `~` is the home directory 
+of the user who will execute the plugin. This will likely be the nagios user, so then the file will be 
+`~nagios/.aws/credentials`.
+
+If you run nagios on an EC2 machine you can also apply a IAM role to the machine with the correct security rights. 
+
 ### Installation ###
 
 To make use of this plugin, you should checkout this script in your nagios plugins directory. 
