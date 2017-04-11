@@ -327,16 +327,16 @@ verbose "Metric value: ${METRIC_VALUE}";
 
 MESSAGE=""
 if [[ "${CRITICAL_MIN}" != "0" ]] && [[ 1 -eq "$(echo "${METRIC_VALUE} < ${CRITICAL_MIN}" | bc)" ]]; then
-    MESSAGE="Critical: ${METRIC_VALUE} < ${CRITICAL_MIN}"
+    MESSAGE="Critical: ${METRIC_VALUE} is less then ${CRITICAL_MIN}"
     EXIT=${STATE_CRITICAL};
 elif [[ "${CRITICAL_MAX}" != "0" ]] && [[ 1 -eq "$(echo "${METRIC_VALUE} > ${CRITICAL_MAX}" | bc)" ]]; then
-    MESSAGE="Critical: ${METRIC_VALUE} > ${CRITICAL_MAX}"
+    MESSAGE="Critical: ${METRIC_VALUE} is more then ${CRITICAL_MAX}"
     EXIT=${STATE_CRITICAL};
 elif [[ "${WARNING_MIN}" != "0" ]] && [[ 1 -eq "$(echo "${METRIC_VALUE} < ${WARNING_MIN}" | bc)" ]]; then
-    MESSAGE="Warning: ${METRIC_VALUE} < ${WARNING_MIN}"
+    MESSAGE="Warning: ${METRIC_VALUE} is less then ${WARNING_MIN}"
     EXIT=${STATE_WARNING};
 elif [[ "${WARNING_MAX}" != "0" ]] && [[ 1 -eq "$(echo "${METRIC_VALUE} > ${WARNING_MAX}" | bc)" ]]; then
-    MESSAGE="Warning: ${METRIC_VALUE} > ${WARNING_MAX}"
+    MESSAGE="Warning: ${METRIC_VALUE} is more then ${WARNING_MAX}"
     EXIT=${STATE_WARNING};
 else
     MESSAGE="All ok. "
