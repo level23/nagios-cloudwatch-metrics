@@ -15,7 +15,7 @@ usage()
 cat << EOF
 usage: $0 [options]
 
-This script checks AWS cloudwatch metrics. This script is ment for Nagios.
+This script checks AWS cloudwatch metrics. This script is meant for Nagios.
 
 We assume that the binary JQ is installed. Also we assume that the AWS CLI binary is installed and that the
 credentials are set up for the user who is executing this script.
@@ -147,7 +147,7 @@ case ${i} in
 
 	    unamestr=`uname`
 
-        # Create files to compair against
+        # Create files to compare against
 	    if [[ "$unamestr" == 'Darwin' ]]; then
 	        START_TIME=$(date -v-${MINUTES}M -u +'%Y-%m-%dT%H:%M:%S')
 	    else
