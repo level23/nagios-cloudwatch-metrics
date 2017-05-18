@@ -91,7 +91,8 @@ function error()
 
 # Display verbose output if wanted
 #
-function verbose {
+function verbose
+{
     if [[ ${VERBOSE} -eq 1 ]];
     then
         echo $1;
@@ -348,15 +349,15 @@ BODY="${DIMENSIONS} ${METRIC} (${MINUTES} min ${STATISTICS}): ${METRIC_VALUE} ${
 verbose "${BODY}"
 
 case ${EXIT} in
-  $STATE_OK)
+  ${STATE_OK})
     printf "OK - ${BODY}"
     exit ${EXIT}
     ;;
-  $STATE_WARNING)
+  ${STATE_WARNING})
     echo "WARNING - ${BODY}"
     exit ${EXIT}
     ;;
-  $STATE_CRITICAL)
+  ${STATE_CRITICAL})
     echo "CRITICAL - ${BODY}"
     exit ${EXIT}
     ;;
