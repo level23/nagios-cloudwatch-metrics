@@ -132,7 +132,7 @@ define command {
 }
 ```
 
-In these examples we have hard-coded defined our region, the 15 minute time window.
+In these examples we have hard-coded defined our region and the 15 minute time window. 
  
 Then, you can configure your nagios services like this:
 
