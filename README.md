@@ -50,12 +50,12 @@ See the help message:
                      See also: http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_concepts.html#dimension-combinations
 
     --warning=x:x    Required: The warning value. You can supply min:max or just min value. If the fetched data is lower
-                     then the minimum, or higher then the maxmimum, we will raise a warning.
-                     If you only want a max check, set min to 0. Example: 0:20 will raise when the value is higher then 20
+                     than the minimum, or higher than the maxmimum, we will raise a warning.
+                     If you only want a max check, set min to 0. Example: 0:20 will raise when the value is higher than 20
 
     --critical=x:x   Required: The critical value. You can supply min:max or just min value. If the fetched data is lower
-                     then the minimum, or higher then the maxmimum, we will raise a critical.
-                     If you only want a max check, set min to 0. Example: 0:20 will raise when the value is higher then 20
+                     than the minimum, or higher than the maxmimum, we will raise a critical.
+                     If you only want a max check, set min to 0. Example: 0:20 will raise when the value is higher than 20
                      
 ```
 
@@ -139,7 +139,7 @@ Then, you can configure your nagios services like this:
 ```
 #
 # We assume that there is at least an average of 100 bytes per minute for myStream. If lower, then a warning.
-# If lower then 50 Bytes, then its critical and we should receive an SMS!
+# If lower than 50 Bytes, then it's critical and we should receive an SMS!
 #
 define service {
         use                         generic-service
@@ -154,8 +154,8 @@ define service {
 }
 
 #
-# We assume that myFunction does not run longer then 60000 ms (60s). If so, trigger a warning.
-# If it runs longer then 120000 ms (120s), trigger an critical notification.
+# We assume that myFunction does not run longer than 60000 ms (60s). If so, trigger a warning.
+# If it runs longer than 120000 ms (120s), trigger an critical notification.
 #
 define service {
         use                         generic-service
