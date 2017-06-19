@@ -201,7 +201,10 @@ case ${i} in
 		;;
 
 	*)
+	    error "Error, unknown parameter \"${i}\" given!";
+	    echo "";
 		usage ;
+		exit ;
 		;;
 	esac
 done
