@@ -9,8 +9,9 @@ STATE_UNKNOWN=3
 type jq >/dev/null 2>&1 || { echo >&2 "I require jq but it's not installed. Aborting."; exit 1; }
 type aws >/dev/null 2>&1 || { echo >&2 "I require awscli but it's not installed. Aborting."; exit 1; }
 type bc >/dev/null 2>&1 || { echo >&2 "I require bc but it's not installed. Aborting."; exit 1; }
+type aws >/dev/null 2>&1 || { echo >&2 "I require awscli but it's not installed. Aborting."; exit 1; }
 
-usage()
+function usage()
 {
 cat << EOF
 usage: $0 [options]
@@ -48,14 +49,44 @@ OPTIONS:
                         Name=DeliveryStreamName,Value=MyStream
                      See also: http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_concepts.html#dimension-combinations
 
-    --warning=x:x    Required: The warning value. You can supply min:max or just min value. If the fetched data is lower
-                     then the minimum, or higher then the maxmimum, we will raise a warning.
-                     If you only want a max check, set min to 0. Example: 0:20 will raise when the value is higher then 20
+    --warning=x:x    Required: The warning threshold. You can supply min:max or just max value. Use the format: [@]min:max
+                     When no minimal value is given, a default min value of 0 is used.
+                     By default we will raise a warning alert when the value is outside the given range. You can start the range
+                     with an @ sign to change this logic. We then will alert when the value is inside the range.
+                     See below for some examples.
 
-    --critical=x:x   Required: The critical value. You can supply min:max or just min value. If the fetched data is lower
-                     then the minimum, or higher then the maxmimum, we will raise a critical.
-                     If you only want a max check, set min to 0. Example: 0:20 will raise when the value is higher then 20
+    --critical=x:x   Required: The critical threshold. You can supply min:max or just max value. Use the format: [@]min:max
+                     When no minimal value is given, a default min value of 0 is used.
+                     By default we will raise a critical alert when the value is outside the given range. You can start the range
+                     with an @ sign to change this logic. We then will alert when the value is inside the range.
+                     See below for some examples.
 
+
+Example threshold values:
+
+--critical=10
+We will raise an alert when the value is < 0 or > 10
+
+--critical=5:10
+We will raise an alert when the value is < 5 or > 10
+
+--critical=@5:10
+We will raise an alert when the value is >= 5 and <= 10
+
+--critical=~:10
+We will raise an alert when the value is > 10 (there is no lower limit)
+
+--critical=10:~
+We will raise an alert when the value is < 10 (there is no upper limit)
+
+--critical=10:
+(Same as above) We will raise an alert when the value is < 10 (there is no upper limit)
+
+--critical=@1:~
+Alert when the value is >= 1. Zero is OK.
+
+
+See for more info: https://www.monitoring-plugins.org/doc/guidelines.html#THRESHOLDFORMAT
 
 
 #######################
@@ -89,6 +120,7 @@ function error()
 	echo -e "${RED}${1}${NC}";
 }
 
+#
 # Display verbose output if wanted
 #
 function verbose
@@ -97,6 +129,149 @@ function verbose
     then
         echo $1;
     fi
+}
+
+# Check if we should alert for the given value.
+# Param 1: threshold. See https://www.monitoring-plugins.org/doc/guidelines.html#THRESHOLDFORMAT
+# Param 2: value
+#
+# The method returns exit code 1 if it should create an ALERT, 0 if the value is ok.
+# Use it like this:
+#
+# shouldAlert "10:15" "9"
+# alert=$?
+#
+# if [[ "${alert}" == "1" ]];
+# then
+#     echo "ALERT";
+# fi
+#
+# Optionally you can use the variable ${MESSAGE} to get details
+function shouldAlert
+{
+    THRESHOLD=$1
+    METRIC_VALUE=$2
+
+    THRESHOLD_MIN=0
+    THRESHOLD_MAX=0
+    THRESHOLD_INSIDE=0
+
+    verbose "";
+    verbose "--- ${THRESHOLD}, test with value: ${METRIC_VALUE} ---";
+
+    # INSIDE mode enabled
+    if [[ `echo "${THRESHOLD}" | head -c 1` == "@" ]];
+    then
+        THRESHOLD_INSIDE=1
+        THRESHOLD=$(echo "${THRESHOLD}" | cut -c 2-);
+    fi
+
+    if [[ ! "${THRESHOLD}" =~ ^([0-9\.~]+:?|:)([0-9\.~]*)?$ ]];
+    then
+        error "Invalid THRESHOLD format: ${THRESHOLD}. See https://www.monitoring-plugins.org/doc/guidelines.html#THRESHOLDFORMAT";
+        error ""
+        usage
+        exit ${STATE_UNKNOWN};
+    fi
+
+    if [[ "${THRESHOLD}" == *":"* ]];
+    then
+      THRESHOLD_MIN=$(echo "${THRESHOLD}" | awk -F':' '{print $1}' );
+      THRESHOLD_MAX=$(echo "${THRESHOLD}" | awk -F':' '{print $2}' );
+
+      if [[ -z "${THRESHOLD_MIN}" ]];
+      then
+        THRESHOLD_MIN="~"
+      fi
+
+      if [[ -z "${THRESHOLD_MAX}" ]];
+      then
+        THRESHOLD_MAX="~"
+      fi
+    else
+      THRESHOLD_MIN="0";
+      THRESHOLD_MAX="${THRESHOLD}";
+    fi
+
+
+    MESSAGE="Unknown"
+    EXIT=0
+
+    # Inside mode check?
+    if [[ "${THRESHOLD_INSIDE}" == "1" ]];
+    then
+        verbose "Running in INSIDE mode (alert if value is inside range {${THRESHOLD_MIN} ... ${THRESHOLD_MAX}})";
+        if [[ "${THRESHOLD_MAX}" == "~" ]] && [[ "${THRESHOLD_MIN}" == "~" ]];
+        then
+            MESSAGE="Value is ALWAYS WRONG. Both MIN and MAX threshold are infinity. Value is always between this range!";
+            EXIT=1;
+        elif [[ "${THRESHOLD_MAX}" == "~" ]];
+        then
+            if [[ 1 -eq "$(echo "${METRIC_VALUE} < ${THRESHOLD_MIN}" | bc)" ]];
+            then
+                MESSAGE="VALUE is ok. The value is not inside the range {${THRESHOLD_MIN} ... ∞}";
+                EXIT=0;
+            else
+                MESSAGE="VALUE is too high. The value SHOULD NOT BE inside the range {${THRESHOLD_MIN} ... ∞}";
+                EXIT=1;
+            fi;
+        elif [[ "${THRESHOLD_MIN}" == "~" ]];
+        then
+            if [[ 1 -eq "$(echo "${METRIC_VALUE} > ${THRESHOLD_MAX}" | bc)" ]];
+            then
+                MESSAGE="VALUE is ok. The value is not inside the range {∞ ... ${THRESHOLD_MAX}}";
+                EXIT=0;
+            else
+                MESSAGE="VALUE is too low. The value SHOULD NOT BE inside the range {∞ ... ${THRESHOLD_MAX}}";
+                EXIT=1;
+            fi;
+        elif [[ 1 -ne "$(echo "${METRIC_VALUE} < ${THRESHOLD_MIN}" | bc)" ]] && [[ 1 -ne "$(echo "${METRIC_VALUE} > ${THRESHOLD_MAX}" | bc)" ]];
+        then
+            MESSAGE="VALUE is wrong. It SHOULD NOT BE inside the range {${THRESHOLD_MIN} ... ${THRESHOLD_MAX}}";
+            EXIT=1;
+        else
+            MESSAGE="VALUE is ok. It is not inside the range {${THRESHOLD_MIN} ... ${THRESHOLD_MAX}}";
+            EXIT=0;
+        fi
+    else
+        verbose "Running in OUTSIDE mode (alert if value is outside range {${THRESHOLD_MIN} ... ${THRESHOLD_MAX}})";
+
+        if [[ "${THRESHOLD_MAX}" == "~" ]] && [[ "${THRESHOLD_MIN}" == "~" ]];
+        then
+            MESSAGE="Value is ALWAYS CORRECT. Both MIN and MAX threshold are infinity. Value is always between this range!";
+            EXIT=0;
+        elif [[ "${THRESHOLD_MAX}" == "~" ]];
+        then
+            if [[ 1 -eq "$(echo "${METRIC_VALUE} >= ${THRESHOLD_MIN}" | bc)" ]];
+            then
+                MESSAGE="VALUE is ok. The value is inside the range {${THRESHOLD_MIN} ... ∞}";
+                EXIT=0;
+            else
+                MESSAGE="VALUE is too high. The value SHOULD BE inside the range {${THRESHOLD_MIN} ... ∞}";
+                EXIT=1;
+            fi;
+        elif [[ "${THRESHOLD_MIN}" == "~" ]];
+        then
+            if [[ 1 -eq "$(echo "${METRIC_VALUE} <= ${THRESHOLD_MAX}" | bc)" ]];
+            then
+                MESSAGE="VALUE is ok. The value is inside the range {∞ ... ${THRESHOLD_MAX}}";
+                EXIT=0;
+            else
+                MESSAGE="VALUE is too low. The value SHOULD BE inside the range {∞ ... ${THRESHOLD_MAX}}";
+                EXIT=1;
+            fi;
+        elif [[ 1 -eq "$(echo "${METRIC_VALUE} < ${THRESHOLD_MIN}" | bc)" ]] || [[ 1 -eq "$(echo "${METRIC_VALUE} > ${THRESHOLD_MAX}" | bc)" ]];
+        then
+            MESSAGE="VALUE is wrong. It SHOULD BE inside the range {${THRESHOLD_MIN} ... ${THRESHOLD_MAX}}";
+            EXIT=1;
+        else
+            MESSAGE="VALUE is ok. It is inside the range {${THRESHOLD_MIN} ... ${THRESHOLD_MAX}}";
+            EXIT=0;
+        fi
+    fi
+
+    verbose "Should alert: ${EXIT} - ${MESSAGE}";
+    return ${EXIT}
 }
 
 #
@@ -256,35 +431,6 @@ then
     exit ${STATE_UNKNOWN};
 fi;
 
-if [[ ! "${WARNING}" =~ ^[0-9\.]+(:[0-9\.]*)?$ ]];
-then
-    error "Warning should be a number or number:number format!";
-    exit ${STATE_UNKNOWN};
-fi
-
-if [[ ! "${CRITICAL}" =~ ^[0-9\.]+(:[0-9\.]*)?$ ]];
-then
-    error "Critical should be a number or number:number format!";
-    exit ${STATE_UNKNOWN};
-fi
-
-if [[ "${WARNING}" == *":"* ]];
-then
-  WARNING_MIN=$(echo "${WARNING}" | awk -F':' '{print $1}' );
-  WARNING_MAX=$(echo "${WARNING}" | awk -F':' '{print $2}' );
-else
-  WARNING_MIN="${WARNING}";
-fi
-
-if [[ "${CRITICAL}" == *":"* ]];
-then
-  CRITICAL_MIN=$(echo "${CRITICAL}" | awk -F':' '{print $1}' );
-  CRITICAL_MAX=$(echo "${CRITICAL}" | awk -F':' '{print $2}' );
-else
-  CRITICAL_MIN="${CRITICAL}";
-fi
-
-
 verbose "Namespace: ${NAMESPACE}";
 verbose "Start time: ${START_TIME}";
 verbose "Metric name: ${METRIC}";
@@ -319,32 +465,29 @@ verbose "Raw result: ${RESULT}";
 verbose "Unit: ${UNIT}";
 DESCRIPTION=$(echo ${RESULT} | jq ".Label")
 
-verbose "Min Warning: ${WARNING_MIN}";
-verbose "Max Warning: ${WARNING_MAX}";
-verbose "";
-verbose "Min Critical: ${CRITICAL_MIN}";
-verbose "Max Critical: ${CRITICAL_MAX}";
-verbose "";
-
 verbose "Metric value: ${METRIC_VALUE}";
 
 
-MESSAGE=""
-if [[ "${CRITICAL_MIN}" != "0" ]] && [[ 1 -eq "$(echo "${METRIC_VALUE} < ${CRITICAL_MIN}" | bc)" ]]; then
-    MESSAGE="Critical: ${METRIC_VALUE} is less then ${CRITICAL_MIN}"
+# Default values
+MESSAGE="All ok. "
+EXIT=${STATE_OK};
+
+# check if we should alert..
+shouldAlert "${WARNING}" "${METRIC_VALUE}"
+crit=$?
+
+if [[ "${crit}" == "1" ]];
+then
     EXIT=${STATE_CRITICAL};
-elif [[ "${CRITICAL_MAX}" != "0" ]] && [[ 1 -eq "$(echo "${METRIC_VALUE} > ${CRITICAL_MAX}" | bc)" ]]; then
-    MESSAGE="Critical: ${METRIC_VALUE} is more then ${CRITICAL_MAX}"
-    EXIT=${STATE_CRITICAL};
-elif [[ "${WARNING_MIN}" != "0" ]] && [[ 1 -eq "$(echo "${METRIC_VALUE} < ${WARNING_MIN}" | bc)" ]]; then
-    MESSAGE="Warning: ${METRIC_VALUE} is less then ${WARNING_MIN}"
-    EXIT=${STATE_WARNING};
-elif [[ "${WARNING_MAX}" != "0" ]] && [[ 1 -eq "$(echo "${METRIC_VALUE} > ${WARNING_MAX}" | bc)" ]]; then
-    MESSAGE="Warning: ${METRIC_VALUE} is more then ${WARNING_MAX}"
-    EXIT=${STATE_WARNING};
 else
-    MESSAGE="All ok. "
-    EXIT=${STATE_OK};
+    # Critical is fine. Maybe a warning?
+    shouldAlert "${WARNING}" "${METRIC_VALUE}"
+    warn=$?
+
+    if [[ "${warn}" == "1" ]];
+    then
+        EXIT=${STATE_WARNING};
+    fi
 fi
 
 BODY="${DIMENSIONS} ${METRIC} (${MINUTES} min ${STATISTICS}): ${METRIC_VALUE} ${UNIT} - ${MESSAGE}"
