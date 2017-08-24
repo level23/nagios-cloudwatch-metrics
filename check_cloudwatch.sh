@@ -9,7 +9,6 @@ STATE_UNKNOWN=3
 type jq >/dev/null 2>&1 || { echo >&2 "I require jq but it's not installed. Aborting."; exit 1; }
 type aws >/dev/null 2>&1 || { echo >&2 "I require awscli but it's not installed. Aborting."; exit 1; }
 type bc >/dev/null 2>&1 || { echo >&2 "I require bc but it's not installed. Aborting."; exit 1; }
-type aws >/dev/null 2>&1 || { echo >&2 "I require awscli but it's not installed. Aborting."; exit 1; }
 
 function usage()
 {
