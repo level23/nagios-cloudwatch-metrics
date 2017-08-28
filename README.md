@@ -49,14 +49,44 @@ See the help message:
                         Name=DeliveryStreamName,Value=MyStream
                      See also: http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_concepts.html#dimension-combinations
 
-    --warning=x:x    Required: The warning value. You can supply min:max or just min value. If the fetched data is lower
-                     than the minimum, or higher than the maxmimum, we will raise a warning.
-                     If you only want a max check, set min to 0. Example: 0:20 will raise when the value is higher than 20
+    --warning=x:x    Required: The warning threshold. You can supply min:max or just max value. Use the format: [@]min:max
+                     When no minimal value is given, a default min value of 0 is used.
+                     By default we will raise a warning alert when the value is outside the given range. You can start the range
+                     with an @ sign to change this logic. We then will alert when the value is inside the range.
+                     See below for some examples.
 
-    --critical=x:x   Required: The critical value. You can supply min:max or just min value. If the fetched data is lower
-                     than the minimum, or higher than the maxmimum, we will raise a critical.
-                     If you only want a max check, set min to 0. Example: 0:20 will raise when the value is higher than 20
-                     
+    --critical=x:x   Required: The critical threshold. You can supply min:max or just max value. Use the format: [@]min:max
+                     When no minimal value is given, a default min value of 0 is used.
+                     By default we will raise a critical alert when the value is outside the given range. You can start the range
+                     with an @ sign to change this logic. We then will alert when the value is inside the range.
+                     See below for some examples.
+
+
+Example threshold values:
+
+--critical=10
+We will raise an alert when the value is < 0 or > 10
+
+--critical=5:10
+We will raise an alert when the value is < 5 or > 10
+
+--critical=@5:10
+We will raise an alert when the value is >= 5 and <= 10
+
+--critical=~:10
+We will raise an alert when the value is > 10 (there is no lower limit)
+
+--critical=10:~
+We will raise an alert when the value is < 10 (there is no upper limit)
+
+--critical=10:
+(Same as above) We will raise an alert when the value is < 10 (there is no upper limit)
+
+--critical=@1:~
+Alert when the value is >= 1. Zero is OK.
+
+
+See for more info: https://www.monitoring-plugins.org/doc/guidelines.html#THRESHOLDFORMAT
 ```
 
 ### AWS Credentials ###
