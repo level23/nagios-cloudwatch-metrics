@@ -472,7 +472,7 @@ MESSAGE="All ok. "
 EXIT=${STATE_OK};
 
 # check if we should alert..
-shouldAlert "${WARNING}" "${METRIC_VALUE}"
+shouldAlert "${CRITICAL}" "${METRIC_VALUE}"
 crit=$?
 
 if [[ "${crit}" == "1" ]];
