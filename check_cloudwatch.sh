@@ -28,7 +28,7 @@ OPTIONS:
     --profile=x      Optional: Which AWS profile should be used to connect to aws?
 
     --namespace=x    Required: Enter the AWS namespace where you want to check your metrics for. The "AWS/" prefix can be
-                     left out. Example: "CloiudFront", "EC2" or "Firehose".
+                     left out. Example: "CloudFront", "EC2" or "Firehose".
                      More information: http://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/aws-namespaces.html
 
     --mins=x         Required: Supply the minutes (time window) of which you want to check the AWS metrics. We will fetch the data
@@ -436,7 +436,7 @@ verbose "Metric name: ${METRIC}";
 verbose "Stop time: ${END_TIME}";
 verbose "Minutes window: ${MINUTES}";
 verbose "Period (Seconds): ${SECONDS}";
-verbose "Demensions: ${DIMENSIONS}";
+verbose "Dimensions: ${DIMENSIONS}";
 
 COMMAND="aws cloudwatch get-metric-statistics"
 COMMAND="$COMMAND --region ${REGION}"
