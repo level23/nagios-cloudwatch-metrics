@@ -208,20 +208,20 @@ function shouldAlert
         then
             if [[ 1 -eq "$(echo "${METRIC_VALUE} < ${THRESHOLD_MIN}" | bc)" ]];
             then
-                MESSAGE="VALUE is ok. The value is not inside the range {${THRESHOLD_MIN} ... ∞}";
+                MESSAGE="VALUE is ok. The value shoud be < {${THRESHOLD_MIN} ";
                 EXIT=0;
             else
-                MESSAGE="VALUE is too high. The value SHOULD NOT BE inside the range {${THRESHOLD_MIN} ... ∞}";
+                MESSAGE="VALUE is too high. The value SHOULD BE < ${THRESHOLD_MIN}";
                 EXIT=1;
             fi;
         elif [[ "${THRESHOLD_MIN}" == "~" ]];
         then
             if [[ 1 -eq "$(echo "${METRIC_VALUE} > ${THRESHOLD_MAX}" | bc)" ]];
             then
-                MESSAGE="VALUE is ok. The value is not inside the range {∞ ... ${THRESHOLD_MAX}}";
+                MESSAGE="VALUE is ok. The value should be > ${THRESHOLD_MAX}";
                 EXIT=0;
             else
-                MESSAGE="VALUE is too low. The value SHOULD NOT BE inside the range {∞ ... ${THRESHOLD_MAX}}";
+                MESSAGE="VALUE is too low. The value SHOULD BE > ${THRESHOLD_MAX}";
                 EXIT=1;
             fi;
         elif [[ 1 -ne "$(echo "${METRIC_VALUE} < ${THRESHOLD_MIN}" | bc)" ]] && [[ 1 -ne "$(echo "${METRIC_VALUE} > ${THRESHOLD_MAX}" | bc)" ]];
@@ -243,20 +243,20 @@ function shouldAlert
         then
             if [[ 1 -eq "$(echo "${METRIC_VALUE} >= ${THRESHOLD_MIN}" | bc)" ]];
             then
-                MESSAGE="VALUE is ok. The value is inside the range {${THRESHOLD_MIN} ... ∞}";
+                MESSAGE="VALUE is ok. The value is >= {${THRESHOLD_MIN}";
                 EXIT=0;
             else
-                MESSAGE="VALUE is too high. The value SHOULD BE inside the range {${THRESHOLD_MIN} ... ∞}";
+                MESSAGE="VALUE is too high. The value SHOULD BE >= {${THRESHOLD_MIN}";
                 EXIT=1;
             fi;
         elif [[ "${THRESHOLD_MIN}" == "~" ]];
         then
             if [[ 1 -eq "$(echo "${METRIC_VALUE} <= ${THRESHOLD_MAX}" | bc)" ]];
             then
-                MESSAGE="VALUE is ok. The value is inside the range {∞ ... ${THRESHOLD_MAX}}";
+                MESSAGE="VALUE is ok. The value is <= ${THRESHOLD_MAX}";
                 EXIT=0;
             else
-                MESSAGE="VALUE is too low. The value SHOULD BE inside the range {∞ ... ${THRESHOLD_MAX}}";
+                MESSAGE="VALUE is too low. The value SHOULD BE <= ${THRESHOLD_MAX}";
                 EXIT=1;
             fi;
         elif [[ 1 -eq "$(echo "${METRIC_VALUE} < ${THRESHOLD_MIN}" | bc)" ]] || [[ 1 -eq "$(echo "${METRIC_VALUE} > ${THRESHOLD_MAX}" | bc)" ]];
