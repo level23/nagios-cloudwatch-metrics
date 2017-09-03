@@ -158,6 +158,11 @@ function shouldAlert
     verbose "";
     verbose "--- ${THRESHOLD}, test with value: ${METRIC_VALUE} ---";
 
+    if [[ "-${METRIC_VALUE}-" == "-null-" ]] || [[ "-${METRIC_VALUE}-" == "--" ]];
+    then
+        UNKNOWN=1
+    fi
+
     # INSIDE mode enabled
     if [[ `echo "${THRESHOLD}" | head -c 1` == "@" ]];
     then
@@ -300,6 +305,7 @@ WARNING_MIN=0
 WARNING_MAX=0
 CRITICAL_MIN=0
 CRITICAL_MAX=0
+UNKNOWN=0
 
 #
 # Awesome parameter parsing, see http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
@@ -487,6 +493,12 @@ else
     then
         EXIT=${STATE_WARNING};
     fi
+fi
+
+# if there was an unknown reponse at some point exit unknown
+if [[ ${UNKNOWN} -eq 1 ]];
+then
+    EXIT=${STATE_UNKNOWN}
 fi
 
 BODY="${DIMENSIONS} ${METRIC} (${MINUTES} min ${STATISTICS}): ${METRIC_VALUE} ${UNIT} - ${MESSAGE}"
