@@ -213,7 +213,7 @@ function shouldAlert
         then
             if [[ 1 -eq "$(echo "${METRIC_VALUE} < ${THRESHOLD_MIN}" | bc)" ]];
             then
-                MESSAGE="VALUE is ok. The value shoud be < {${THRESHOLD_MIN} ";
+                MESSAGE="VALUE is ok. The value shoud be < ${THRESHOLD_MIN} ";
                 EXIT=0;
             else
                 MESSAGE="VALUE is too high. The value SHOULD BE < ${THRESHOLD_MIN}";
