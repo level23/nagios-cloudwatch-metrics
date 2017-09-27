@@ -65,6 +65,14 @@ OPTIONS:
                      with that value when no data points are returned.
 
 
+    --http_proxy="x" When you use a proxy to connect to the AWS Cli, you can use this option. See for more information
+                     this link: http://docs.aws.amazon.com/cli/latest/userguide/cli-http-proxy.html
+
+    --https_proxy="x" When you use a proxy to connect to the AWS Cli, you can use this option. See for more information
+                     this link: http://docs.aws.amazon.com/cli/latest/userguide/cli-http-proxy.html
+
+
+
 Example threshold values:
 
 --critical=10
@@ -311,6 +319,8 @@ CRITICAL_MIN=0
 CRITICAL_MAX=0
 UNKNOWN=0
 DEFAULT_VALUE=""
+HTTP_PROXY=""
+HTTPS_PROXY=""
 
 #
 # Awesome parameter parsing, see http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
@@ -327,6 +337,16 @@ case ${i} in
 		NAMESPACE="AWS/${i#*=}"
 		shift ;
 		;;
+
+	--http_proxy=* )
+        HTTP_PROXY="${i#*=}"
+        shift ;
+        ;;
+
+    --https_proxy=* )
+        HTTPS_PROXY="${i#*=}"
+        shift ;
+        ;;
 
 	--default=* )
 		DEFAULT_VALUE="${i#*=}"
@@ -472,6 +492,14 @@ fi
 
 verbose "COMMAND: $COMMAND";
 verbose "----------------";
+
+if [[ ! -z "${HTTP_PROXY}" ]];
+then
+    export  HTTP_PROXY=${HTTP_PROXY};
+elif [[ ! -z "${HTTPS_PROXY}" ]];
+then
+  export  HTTPS_PROXY=${HTTPS_PROXY};
+fi
 
 RESULT=$(${COMMAND});
 METRIC_VALUE=$(echo ${RESULT} | jq ".Datapoints[0].${STATISTICS}")
