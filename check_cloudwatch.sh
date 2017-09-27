@@ -329,7 +329,7 @@ case ${i} in
 		;;
 
 	--default=* )
-		DEFAULT_VALUE="{i#*=}"
+		DEFAULT_VALUE="${i#*=}"
 		shift ;
 		;;
 
