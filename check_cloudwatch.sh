@@ -60,6 +60,10 @@ OPTIONS:
                      with an @ sign to change this logic. We then will alert when the value is inside the range.
                      See below for some examples.
 
+    --default="x"    When no data points are returned, it could be because there is no data. By default this script will return
+                     the nagios state UNKNOWN. You could also supply a default value here (like 0). In that case we will work
+                     with that value when no data points are returned.
+
 
 Example threshold values:
 
@@ -306,6 +310,7 @@ WARNING_MAX=0
 CRITICAL_MIN=0
 CRITICAL_MAX=0
 UNKNOWN=0
+DEFAULT_VALUE=""
 
 #
 # Awesome parameter parsing, see http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
@@ -320,6 +325,11 @@ case ${i} in
 
 	--namespace=* )
 		NAMESPACE="AWS/${i#*=}"
+		shift ;
+		;;
+
+	--default=* )
+		DEFAULT_VALUE="{i#*=}"
 		shift ;
 		;;
 
@@ -472,6 +482,11 @@ DESCRIPTION=$(echo ${RESULT} | jq ".Label")
 
 verbose "Metric value: ${METRIC_VALUE}";
 
+if [[ "${METRIC_VALUE}" == "null" ]] && [[ "${DEFAULT_VALUE}" != "" ]];
+then
+    verbose "We did not receive any data. Lets work with our default value: ${DEFAULT_VALUE}";
+    METRIC_VALUE="${DEFAULT_VALUE}"
+fi
 
 # Default values
 MESSAGE="All ok. "
