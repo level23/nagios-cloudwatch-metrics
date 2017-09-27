@@ -60,6 +60,11 @@ See the help message:
                      By default we will raise a critical alert when the value is outside the given range. You can start the range
                      with an @ sign to change this logic. We then will alert when the value is inside the range.
                      See below for some examples.
+                     
+    --default="x"    When no data points are returned, it could be because there is no data. By default this script will return
+                     the nagios state UNKNOWN. You could also supply a default value here (like 0). In that case we will work
+                     with that value when no data points are returned.
+                     
 
 
 Example threshold values:
@@ -112,7 +117,7 @@ cd /usr/lib/nagios/plugins/
 git clone https://github.com/level23/nagios-cloudwatch-metrics.git
 ```
 
-Then you should define a command to your nagios configuration. Example commands:
+Then you should define a command to your nagios configuration. Some example commands:
 
 ```
 #
@@ -160,9 +165,31 @@ define command {
 	command_name	check_aws_sns
 	command_line	$USER1$/nagios-cloudwatch-metrics/check_cloudwatch.sh --region=eu-west-1 --namespace="SNS" --metric="$ARG1$" --statistics="Sum" --mins=15 --dimensions="Name=TopicName,Value=$ARG2$" --warning=$ARG3$ --critical=$ARG4$
 }
+
+#
+# Check check_aws_elb
+# $ARG1$: Metric, for example: UnHealthyHostCount or HTTPCode_ELB_5XX
+# $ARG2$: LoadBalancerName
+# $ARG3$: Warning value
+# $ARG4$: Critical value
+define command {
+	command_name	check_aws_elb
+	command_line	$USER1$/nagios-cloudwatch-metrics/check_cloudwatch.sh --region=eu-west-1 --namespace="ELB" --metric="$ARG1$" --statistics="Maximum" --mins=1 --dimensions="Name=LoadBalancerName,Value=$ARG2$" --warning=$ARG3$ --critical=$ARG4$
+}
+
+#
+# Check check_aws_elasticache
+# $ARG1$: Metric, for example: CPUUtilization
+# $ARG2$: CacheClusterId
+# $ARG3$: Warning
+# $ARG4$: Critical value
+define command {
+	command_name	check_aws_elasticache
+	command_line	$USER1$/nagios-cloudwatch-metrics/check_cloudwatch.sh --region=eu-west-1 --namespace="ElastiCache" --metric="$ARG1$" --statistics="Average" --mins=15 --dimensions="Name=CacheClusterId,Value=$ARG2$" --warning=$ARG3$ --critical=$ARG4$
+}
 ```
 
-In these examples we have hard-coded defined our region and the 15 minute time window. 
+In these examples we have hard-coded defined our region and the X minutes time window. 
  
 Then, you can configure your nagios services like this:
 
