@@ -121,6 +121,21 @@ Then you should define a command to your nagios configuration. Some example comm
 
 ```
 #
+# Generic cloudwatch_check
+# $ARG1$: Namespace (i.e., ELB, EC2, RDS, etc.)
+# $ARG2$: Metric
+# $ARG3$: Dimension (i.e., InstanceId)
+# $ARG4$: Dimension Value (i.e., i-1a2b3c4d)
+# $ARG5$: Warning Level
+# $ARG6$: Critical Level
+# $ARG7$: Time Interval
+# $ARG8$: Default (0 if null)
+define command {
+       command_name	check_aws
+       command_line     $USER1$/nagios-cloudwatch-metrics/check_cloudwatch.sh --region=us-east-1 --namespace="$ARG1$" --metric="$ARG2$" --statistics="Average" --mins=$ARG7$ --dimensions="Name=$ARG3$,Value=$ARG4$" --warning=$ARG5$ --critical=$ARG6$ --default=$ARG8$
+}
+
+#
 # Check check_aws_firehose
 # $ARG1$: Metric, for example: IncomingBytes
 # $ARG2$: DeliveryStreamName
