@@ -493,12 +493,12 @@ fi
 verbose "COMMAND: $COMMAND";
 verbose "----------------";
 
-if [[ ! -z "${HTTP_PROXY}" ]];
+if [[ ! -z "${HTTPS_PROXY}" ]];
 then
-    export  HTTP_PROXY=${HTTP_PROXY};
-elif [[ ! -z "${HTTPS_PROXY}" ]];
+    export  HTTPS_PROXY=${HTTPS_PROXY};
+elif [[ ! -z "${HTTP_PROXY}" ]];
 then
-  export  HTTPS_PROXY=${HTTPS_PROXY};
+  export  HTTP_PROXY=${HTTP_PROXY};
 fi
 
 RESULT=$(${COMMAND});
