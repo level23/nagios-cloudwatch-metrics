@@ -9,6 +9,7 @@ STATE_UNKNOWN=3
 type jq >/dev/null 2>&1 || { echo >&2 "I require jq but it's not installed. Aborting."; exit 1; }
 type aws >/dev/null 2>&1 || { echo >&2 "I require awscli but it's not installed. Aborting."; exit 1; }
 type bc >/dev/null 2>&1 || { echo >&2 "I require bc but it's not installed. Aborting."; exit 1; }
+type timeout >/dev/null 2>&1 || type gtimeout >/dev/null 2>&1 || { echo >&2 "I require timeout or gtimeout, but neither is installed. Aborting."; exit 1; }
 
 function usage()
 {
@@ -37,6 +38,9 @@ OPTIONS:
     --region=x       Required: Enter the AWS region which we need to use. For example: "eu-west-1"
 
     --metric=x       Required: The metric name which you want to check. For example "IncomingBytes"
+
+    --timeout=x      Optional: Specify the max duration in seconds of this script.
+                     When the timeout is reached, we will return a UNKNOWN alert status.
 
     --statistics=x   Required: The statistics which you want to fetch.
                      Possible values: Sum, Average, Maximum, Minimum, SampleCount
@@ -321,6 +325,7 @@ UNKNOWN=0
 DEFAULT_VALUE=""
 HTTP_PROXY=""
 HTTPS_PROXY=""
+TIMEOUTSEC=0
 
 #
 # Awesome parameter parsing, see http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
@@ -387,6 +392,11 @@ case ${i} in
 
 	-v | --verbose )
 		VERBOSE=1
+		shift ;
+		;;
+
+	--timeout=* )
+	   TIMEOUTSEC="${i#*=}"
 		shift ;
 		;;
 
@@ -466,6 +476,13 @@ then
     exit ${STATE_UNKNOWN};
 fi;
 
+if type timeout 2>/dev/null;
+then
+    TIMEOUTCMD=timeout;
+else
+    TIMEOUTCMD=gtimeout;
+fi
+
 verbose "Namespace: ${NAMESPACE}";
 verbose "Start time: ${START_TIME}";
 verbose "Metric name: ${METRIC}";
@@ -475,22 +492,22 @@ verbose "Period (Seconds): ${SECONDS}";
 verbose "Dimensions: ${DIMENSIONS}";
 
 COMMAND="aws cloudwatch get-metric-statistics"
-COMMAND="$COMMAND --region ${REGION}"
-COMMAND="$COMMAND --namespace ${NAMESPACE}";
-COMMAND="$COMMAND --metric-name ${METRIC}";
-COMMAND="$COMMAND --output json";
-COMMAND="$COMMAND --start-time ${START_TIME}";
-COMMAND="$COMMAND --end-time ${END_TIME}";
-COMMAND="$COMMAND --period ${SECONDS}";
-COMMAND="$COMMAND --statistics ${STATISTICS}";
-COMMAND="$COMMAND --dimensions ${DIMENSIONS}";
+COMMAND="${COMMAND} --region ${REGION}"
+COMMAND="${COMMAND} --namespace ${NAMESPACE}";
+COMMAND="${COMMAND} --metric-name ${METRIC}";
+COMMAND="${COMMAND} --output json";
+COMMAND="${COMMAND} --start-time ${START_TIME}";
+COMMAND="${COMMAND} --end-time ${END_TIME}";
+COMMAND="${COMMAND} --period ${SECONDS}";
+COMMAND="${COMMAND} --statistics ${STATISTICS}";
+COMMAND="${COMMAND} --dimensions ${DIMENSIONS}";
 
-if [[ "$PROFILE" != "" ]];
+if [[ "${PROFILE}" != "" ]];
 then
-  COMMAND="$COMMAND --profile $PROFILE";
+  COMMAND="${COMMAND} --profile ${PROFILE}";
 fi
 
-verbose "COMMAND: $COMMAND";
+verbose "COMMAND: ${COMMAND}";
 verbose "----------------";
 
 if [[ ! -z "${HTTPS_PROXY}" ]];
@@ -501,7 +518,25 @@ then
   export  HTTP_PROXY=${HTTP_PROXY};
 fi
 
-RESULT=$(${COMMAND});
+# execute the command, optionally with a timeout check
+if [[ ${TIMEOUTSEC} -gt 0 ]];
+then
+    COMMAND="${TIMEOUTCMD} ${TIMEOUTSEC} ${COMMAND}";
+
+    RESULT=$(${COMMAND});
+
+    # command timed out ?
+    if [[ $? -eq 124 ]];
+    then
+        verbose "Our command timed out after ${TIMEOUTSEC} seconds. Return status UNKOWN!";
+        echo "UNKNOWN - We failed to retrieve results within ${TIMEOUTSEC} seconds."
+        exit ${STATE_UNKNOWN};
+    fi
+else
+    RESULT=$(${COMMAND});
+fi
+
+
 METRIC_VALUE=$(echo ${RESULT} | jq ".Datapoints[0].${STATISTICS}")
 UNIT=$(echo ${RESULT} | jq -r ".Datapoints[0].Unit")
 verbose "Raw result: ${RESULT}";
