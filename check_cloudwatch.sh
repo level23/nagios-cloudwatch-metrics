@@ -476,7 +476,7 @@ then
     exit ${STATE_UNKNOWN};
 fi;
 
-if type timeout 2>/dev/null;
+if type timeout >/dev/null;
 then
     TIMEOUTCMD=timeout;
 else
