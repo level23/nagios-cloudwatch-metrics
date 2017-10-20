@@ -38,6 +38,9 @@ See the help message:
     --region=x       Required: Enter the AWS region which we need to use. For example: "eu-west-1"
 
     --metric=x       Required: The metric name which you want to check. For example "IncomingBytes"
+    
+    --timeout=x      Optional: Specify the max duration in seconds of this script.
+                     When the timeout is reached, we will return a UNKNOWN alert status.
 
     --statistics=x   Required: The statistics which you want to fetch.
                      Possible values: Sum, Average, Maximum, Minimum, SampleCount
