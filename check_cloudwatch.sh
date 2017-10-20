@@ -267,7 +267,7 @@ function shouldAlert
                 MESSAGE="VALUE is ok. The value is >= ${THRESHOLD_MIN}";
                 EXIT=0;
             else
-                MESSAGE="VALUE is too high. The value SHOULD BE >= ${THRESHOLD_MIN}";
+                MESSAGE="VALUE is too low. The value SHOULD BE >= ${THRESHOLD_MIN}";
                 EXIT=1;
             fi;
         elif [[ "${THRESHOLD_MIN}" == "~" ]];
@@ -277,7 +277,7 @@ function shouldAlert
                 MESSAGE="VALUE is ok. The value is <= ${THRESHOLD_MAX}";
                 EXIT=0;
             else
-                MESSAGE="VALUE is too low. The value SHOULD BE <= ${THRESHOLD_MAX}";
+                MESSAGE="VALUE is too high. The value SHOULD BE <= ${THRESHOLD_MAX}";
                 EXIT=1;
             fi;
         elif [[ 1 -eq "$(echo "${METRIC_VALUE} < ${THRESHOLD_MIN}" | bc)" ]] || [[ 1 -eq "$(echo "${METRIC_VALUE} > ${THRESHOLD_MAX}" | bc)" ]];
