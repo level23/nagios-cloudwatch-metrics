@@ -528,7 +528,7 @@ then
     # command timed out ?
     if [[ $? -eq 124 ]];
     then
-        verbose "Our command timed out after ${TIMEOUTSEC} seconds. Return status UNKOWN!";
+        verbose "Our command timed out after ${TIMEOUTSEC} seconds. Return status UNKNOWN!";
         echo "UNKNOWN - We failed to retrieve results within ${TIMEOUTSEC} seconds."
         exit ${STATE_UNKNOWN};
     fi
