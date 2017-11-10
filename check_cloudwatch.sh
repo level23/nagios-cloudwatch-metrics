@@ -171,12 +171,17 @@ function shouldAlert
     THRESHOLD_MAX=0
     THRESHOLD_INSIDE=0
 
+    MESSAGE="Unknown"
+    EXIT=0
+
     verbose "";
     verbose "--- ${THRESHOLD}, test with value: ${METRIC_VALUE} ---";
 
     if [[ "-${METRIC_VALUE}-" == "-null-" ]] || [[ "-${METRIC_VALUE}-" == "--" ]];
     then
-        UNKNOWN=1
+        UNKNOWN=1;
+        MESSAGE="No metric value known.";
+        return ${EXIT};
     fi
 
     # INSIDE mode enabled
@@ -212,10 +217,6 @@ function shouldAlert
       THRESHOLD_MIN="0";
       THRESHOLD_MAX="${THRESHOLD}";
     fi
-
-
-    MESSAGE="Unknown"
-    EXIT=0
 
     # Inside mode check?
     if [[ "${THRESHOLD_INSIDE}" == "1" ]];
