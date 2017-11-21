@@ -205,6 +205,17 @@ define command {
 	command_name	check_aws_elasticache
 	command_line	$USER1$/nagios-cloudwatch-metrics/check_cloudwatch.sh --region=eu-west-1 --namespace="ElastiCache" --metric="$ARG1$" --statistics="Average" --mins=15 --dimensions="Name=CacheClusterId,Value=$ARG2$" --warning=$ARG3$ --critical=$ARG4$
 }
+
+#
+# Check check_aws_cloudfront
+# $ARG1$: Metric, for example: 4xxErrorRate
+# $ARG2$: DistributionId
+# $ARG3$: Warning
+# $ARG4$: Critical value
+define command {
+	command_name	check_aws_cloudfront
+	command_line	$USER1$/nagios-cloudwatch-metrics/check_cloudwatch.sh --region=us-east-1 --namespace="CloudFront" --metric="$ARG1$" --statistics="Average" --mins=15 --dimensions="Name=DistributionId,Value=$ARG2$ Name=Region,Value=Global" --warning=$ARG3$ --critical=$ARG4$
+}
 ```
 
 In these examples we have hard-coded defined our region and the X minutes time window. 
