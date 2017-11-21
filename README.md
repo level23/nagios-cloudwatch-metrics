@@ -213,7 +213,7 @@ define command {
 # $ARG3$: Warning
 # $ARG4$: Critical value
 define command {
-	command_name	check_aws_elasticache
+	command_name	check_aws_cloudfront
 	command_line	$USER1$/nagios-cloudwatch-metrics/check_cloudwatch.sh --region=us-east-1 --namespace="CloudFront" --metric="$ARG1$" --statistics="Average" --mins=15 --dimensions="Name=DistributionId,Value=$ARG2$ Name=Region,Value=Global" --warning=$ARG3$ --critical=$ARG4$
 }
 ```
