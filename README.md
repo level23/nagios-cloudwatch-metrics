@@ -216,6 +216,18 @@ define command {
 	command_name	check_aws_cloudfront
 	command_line	$USER1$/nagios-cloudwatch-metrics/check_cloudwatch.sh --region=us-east-1 --namespace="CloudFront" --metric="$ARG1$" --statistics="Average" --mins=15 --dimensions="Name=DistributionId,Value=$ARG2$ Name=Region,Value=Global" --warning=$ARG3$ --critical=$ARG4$
 }
+
+#
+# Check check_aws_rds over last 5 minutes
+# $ARG1$: Metric, for example: CPUUtilization
+# $ARG2$: ClusterId
+# $ARG2$: READER/WRITER
+# $ARG3$: Warning
+# $ARG4$: Critical value
+define command {
+	command_name	check_aws_rds
+	command_line	$USER1$/nagios-cloudwatch-metrics/check_cloudwatch.sh --region=eu-west-1 --namespace="RDS" --metric="$ARG1$" --statistics="Average" --mins=5 --dimensions="Name=DBClusterIdentifier,Value=$ARG2$ Name=Role,Value=$ARG3$" --warning=$ARG4$ --critical=$ARG5$
+}
 ```
 
 In these examples we have hard-coded defined our region and the X minutes time window. 
