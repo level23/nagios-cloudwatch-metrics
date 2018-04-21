@@ -542,6 +542,10 @@ fi
 
 
 METRIC_VALUE=$(echo ${RESULT} | jq ".Datapoints[0].${STATISTICS}")
+
+# Make sure that Scientific value is converted to floats
+printf -v METRIC_VALUE '%.9f' $METRIC_VALUE
+
 UNIT=$(echo ${RESULT} | jq -r ".Datapoints[0].Unit")
 verbose "Raw result: ${RESULT}";
 verbose "Unit: ${UNIT}";
