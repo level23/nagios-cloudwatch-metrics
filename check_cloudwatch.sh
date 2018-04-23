@@ -22,58 +22,62 @@ We assume that the binary JQ is installed. Also we assume that the AWS CLI binar
 credentials are set up for the user who is executing this script.
 
 OPTIONS:
-    -h or --help     Show this message
+    -h or --help           Show this message
 
-    -v or --verbose  Optional: Show verbose output
+    -v or --verbose        Optional: Show verbose output
 
-    --profile=x      Optional: Which AWS profile should be used to connect to aws?
+    --profile=x            Optional: Which AWS profile should be used to connect to aws?
 
-    --namespace=x    Required: Enter the AWS namespace where you want to check your metrics for. The "AWS/" prefix can be
-                     left out. Example: "CloudFront", "EC2" or "Firehose".
-                     More information: http://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/aws-namespaces.html
+    --namespace=x          Required: Enter the AWS namespace where you want to check your metrics for. The "AWS/" prefix can be
+                           left out, this is the default namespace prefix. See below. Example: "CloudFront", "EC2" or "Firehose".
+                           More information: http://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/aws-namespaces.html
 
-    --mins=x         Required: Supply the minutes (time window) of which you want to check the AWS metrics. We will fetch the data
-                     between NOW-%mins and NOW.
+    --namespace-prefix=x   The prefix for the namespace which should be used. By default this is "AWS". If you do not want to use this prefix
+                           you should pass this parameter with an empty value.
+                           Default: AWS
 
-    --region=x       Required: Enter the AWS region which we need to use. For example: "eu-west-1"
+    --mins=x               Required: Supply the minutes (time window) of which you want to check the AWS metrics. We will fetch the data
+                           between NOW-%mins and NOW.
 
-    --metric=x       Required: The metric name which you want to check. For example "IncomingBytes"
+    --region=x             Required: Enter the AWS region which we need to use. For example: "eu-west-1"
 
-    --timeout=x      Optional: Specify the max duration in seconds of this script.
-                     When the timeout is reached, we will return a UNKNOWN alert status.
+    --metric=x             Required: The metric name which you want to check. For example "IncomingBytes"
 
-    --statistics=x   Required: The statistics which you want to fetch.
-                     Possible values: Sum, Average, Maximum, Minimum, SampleCount
-                     Default: Average
+    --timeout=x            Optional: Specify the max duration in seconds of this script.
+                           When the timeout is reached, we will return a UNKNOWN alert status.
 
-    --dimensions=x   Required: The dimensions which you want to fetch.
-                     Examples:
-                        Name=DBInstanceIdentifier,Value=i-1235534
-                        Name=DeliveryStreamName,Value=MyStream
-                     See also: http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_concepts.html#dimension-combinations
+    --statistics=x         Required: The statistics which you want to fetch.
+                           Possible values: Sum, Average, Maximum, Minimum, SampleCount
+                           Default: Average
 
-    --warning=x:x    Required: The warning threshold. You can supply min:max or just max value. Use the format: [@]min:max
-                     When no minimal value is given, a default min value of 0 is used.
-                     By default we will raise a warning alert when the value is outside the given range. You can start the range
-                     with an @ sign to change this logic. We then will alert when the value is inside the range.
-                     See below for some examples.
+    --dimensions=x         Required: The dimensions which you want to fetch.
+                           Examples:
+                              Name=DBInstanceIdentifier,Value=i-1235534
+                              Name=DeliveryStreamName,Value=MyStream
+                           See also: http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_concepts.html#dimension-combinations
 
-    --critical=x:x   Required: The critical threshold. You can supply min:max or just max value. Use the format: [@]min:max
-                     When no minimal value is given, a default min value of 0 is used.
-                     By default we will raise a critical alert when the value is outside the given range. You can start the range
-                     with an @ sign to change this logic. We then will alert when the value is inside the range.
-                     See below for some examples.
+    --warning=x:x          Required: The warning threshold. You can supply min:max or just max value. Use the format: [@]min:max
+                           When no minimal value is given, a default min value of 0 is used.
+                           By default we will raise a warning alert when the value is outside the given range. You can start the range
+                           with an @ sign to change this logic. We then will alert when the value is inside the range.
+                           See below for some examples.
 
-    --default="x"    When no data points are returned, it could be because there is no data. By default this script will return
-                     the nagios state UNKNOWN. You could also supply a default value here (like 0). In that case we will work
-                     with that value when no data points are returned.
+    --critical=x:x         Required: The critical threshold. You can supply min:max or just max value. Use the format: [@]min:max
+                           When no minimal value is given, a default min value of 0 is used.
+                           By default we will raise a critical alert when the value is outside the given range. You can start the range
+                           with an @ sign to change this logic. We then will alert when the value is inside the range.
+                           See below for some examples.
+
+    --default="x"          When no data points are returned, it could be because there is no data. By default this script will return
+                           the nagios state UNKNOWN. You could also supply a default value here (like 0). In that case we will work
+                           with that value when no data points are returned.
 
 
-    --http_proxy="x" When you use a proxy to connect to the AWS Cli, you can use this option. See for more information
-                     this link: http://docs.aws.amazon.com/cli/latest/userguide/cli-http-proxy.html
+    --http_proxy="x"       When you use a proxy to connect to the AWS Cli, you can use this option. See for more information
+                           this link: http://docs.aws.amazon.com/cli/latest/userguide/cli-http-proxy.html
 
-    --https_proxy="x" When you use a proxy to connect to the AWS Cli, you can use this option. See for more information
-                     this link: http://docs.aws.amazon.com/cli/latest/userguide/cli-http-proxy.html
+    --https_proxy="x"       When you use a proxy to connect to the AWS Cli, you can use this option. See for more information
+                           this link: http://docs.aws.amazon.com/cli/latest/userguide/cli-http-proxy.html
 
 
 
@@ -109,14 +113,14 @@ See for more info: https://www.monitoring-plugins.org/doc/guidelines.html#THRESH
 # Example usage:
 #
 # Description here
-# $0 --region=eu-west-1 \
-#    --namespace="Firehose" \
-#    --metric="IncomingBytes" \
-#    --statistics="Average" \
-#    --mins=15 \
-#    --dimensions="Name=DeliveryStreamName,Value=Visits-To-Redshift" \
-#    --warning=100 \
-#    --critical=50
+# $0 --region=eu-west-1 \\
+#    --namespace="Firehose" \\
+#    --metric="IncomingBytes" \\
+#    --statistics="Average" \\
+#    --mins=15 \\
+#    --dimensions="Name=DeliveryStreamName,Value=Visits-To-Redshift" \\
+#    --warning=100 \\
+#    --critical=50 \\
 #    --verbose
 #
 ########################
@@ -306,6 +310,7 @@ fi
 
 PROFILE=""
 NAMESPACE=""
+NAMESPACE_PREFIX="AWS"
 MINUTES=0
 START_TIME=""
 END_TIME=""
@@ -340,7 +345,12 @@ case ${i} in
 		;;
 
 	--namespace=* )
-		NAMESPACE="AWS/${i#*=}"
+		NAMESPACE="${i#*=}"
+		shift ;
+		;;
+
+	--namespace-prefix=* )
+		NAMESPACE_PREFIX="${i#*=}"
 		shift ;
 		;;
 
@@ -482,6 +492,12 @@ then
     TIMEOUTCMD=timeout;
 else
     TIMEOUTCMD=gtimeout;
+fi
+
+# when a prefix is given, use that one.
+if [[ ! -z "${NAMESPACE_PREFIX}" ]] ;
+then
+    NAMESPACE="${NAMESPACE_PREFIX}/${NAMESPACE}";
 fi
 
 verbose "Namespace: ${NAMESPACE}";
