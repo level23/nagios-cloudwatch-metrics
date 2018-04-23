@@ -104,6 +104,9 @@ We will raise an alert when the value is < 10 (there is no upper limit)
 --critical=@1:~
 Alert when the value is >= 1. Zero is OK.
 
+--critical=@~:0
+Alert when the value is <= 0. So 0.1 or higher is okay.
+
 
 See for more info: https://www.monitoring-plugins.org/doc/guidelines.html#THRESHOLDFORMAT
 
@@ -555,6 +558,10 @@ fi
 
 
 METRIC_VALUE=$(echo ${RESULT} | jq ".Datapoints[0].${STATISTICS}")
+
+# Make sure that Scientific value is converted to floats
+printf -v METRIC_VALUE '%.9f' $METRIC_VALUE
+
 UNIT=$(echo ${RESULT} | jq -r ".Datapoints[0].Unit")
 verbose "Raw result: ${RESULT}";
 verbose "Unit: ${UNIT}";
