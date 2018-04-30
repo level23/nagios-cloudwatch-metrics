@@ -558,6 +558,11 @@ fi
 
 
 METRIC_VALUE=$(echo ${RESULT} | jq ".Datapoints[0].${STATISTICS}")
+if [[ "${METRIC_VALUE}" == "null" ]] && [[ "${DEFAULT_VALUE}" != "" ]];
+then
+    verbose "We did not receive any data. Lets work with our default value: ${DEFAULT_VALUE}";
+    METRIC_VALUE="${DEFAULT_VALUE}"
+fi
 
 # Make sure that Scientific value is converted to floats
 printf -v METRIC_VALUE '%.9f' $METRIC_VALUE
@@ -568,12 +573,6 @@ verbose "Unit: ${UNIT}";
 DESCRIPTION=$(echo ${RESULT} | jq ".Label")
 
 verbose "Metric value: ${METRIC_VALUE}";
-
-if [[ "${METRIC_VALUE}" == "null" ]] && [[ "${DEFAULT_VALUE}" != "" ]];
-then
-    verbose "We did not receive any data. Lets work with our default value: ${DEFAULT_VALUE}";
-    METRIC_VALUE="${DEFAULT_VALUE}"
-fi
 
 # Default values
 MESSAGE="All ok. "
