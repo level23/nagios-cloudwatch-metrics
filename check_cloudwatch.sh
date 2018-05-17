@@ -317,7 +317,7 @@ NAMESPACE_PREFIX="AWS"
 MINUTES=0
 START_TIME=""
 END_TIME=""
-SECONDS=0
+SECS=0
 REGION=""
 METRIC=""
 STATISTICS="Average"
@@ -385,7 +385,7 @@ case ${i} in
 	    fi
 
         END_TIME=$(date -u +'%Y-%m-%dT%H:%M:00')
-        SECONDS=$((60 * ${MINUTES}));
+        SECS=$((60 * ${MINUTES}));
 	    shift ;
 	    ;;
 
@@ -508,7 +508,7 @@ verbose "Start time: ${START_TIME}";
 verbose "Metric name: ${METRIC}";
 verbose "Stop time: ${END_TIME}";
 verbose "Minutes window: ${MINUTES}";
-verbose "Period (Seconds): ${SECONDS}";
+verbose "Period (Seconds): ${SECS}";
 verbose "Dimensions: ${DIMENSIONS}";
 
 COMMAND="aws cloudwatch get-metric-statistics"
@@ -518,7 +518,7 @@ COMMAND="${COMMAND} --metric-name ${METRIC}";
 COMMAND="${COMMAND} --output json";
 COMMAND="${COMMAND} --start-time ${START_TIME}";
 COMMAND="${COMMAND} --end-time ${END_TIME}";
-COMMAND="${COMMAND} --period ${SECONDS}";
+COMMAND="${COMMAND} --period ${SECS}";
 COMMAND="${COMMAND} --statistics ${STATISTICS}";
 COMMAND="${COMMAND} --dimensions ${DIMENSIONS}";
 
