@@ -376,15 +376,22 @@ case ${i} in
 	    MINUTES="${i#*=}"
 
 	    unamestr=`uname`
+	    STARTMINS=$((MINUTES+1))
 
         # Create files to compare against
 	    if [[ "$unamestr" == 'Darwin' ]]; then
-	        START_TIME=$(date -v-${MINUTES}M -u +'%Y-%m-%dT%H:%M:%S')
+	        START_TIME=$(date -v-${STARTMINS}M -u +'%Y-%m-%dT%H:%M:00')
 	    else
-	        START_TIME=$(date -u +'%Y-%m-%dT%H:%M:%S' -d "-${MINUTES} minutes")
+	        START_TIME=$(date -u +'%Y-%m-%dT%H:%M:00' -d "-${STARTMINS} minutes")
 	    fi
 
-        END_TIME=$(date -u +'%Y-%m-%dT%H:%M:00')
+	    # Create files to compare against
+	    if [[ "$unamestr" == 'Darwin' ]]; then
+	        END_TIME=$(date -v-1M -u +'%Y-%m-%dT%H:%M:00')
+	    else
+	        END_TIME=$(date -u +'%Y-%m-%dT%H:%M:00' -d "-1 minutes")
+	    fi
+
         SECS=$((60 * ${MINUTES}));
 	    shift ;
 	    ;;
