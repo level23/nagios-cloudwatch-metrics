@@ -571,8 +571,11 @@ then
     METRIC_VALUE="${DEFAULT_VALUE}"
 fi
 
-# Make sure that Scientific value is converted to floats
-printf -v METRIC_VALUE '%.9f' $METRIC_VALUE
+if [[ "${METRIC_VALUE}" != "null" ]];
+then
+    # Make sure that Scientific value is converted to floats
+    printf -v METRIC_VALUE '%.9f' $METRIC_VALUE
+fi
 
 UNIT=$(echo ${RESULT} | jq -r ".Datapoints[0].Unit")
 verbose "Raw result: ${RESULT}";
