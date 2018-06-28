@@ -475,13 +475,6 @@ then
     exit ${STATE_UNKNOWN};
 fi;
 
-if [[ "${DIMENSIONS}" == "" ]];
-then
-    error "You have to supply dimensions!";
-    usage;
-    exit ${STATE_UNKNOWN};
-fi;
-
 if [[ "${METRIC}" == "" ]];
 then
     error "You have to supply a metric!";
@@ -527,7 +520,7 @@ COMMAND="${COMMAND} --start-time ${START_TIME}";
 COMMAND="${COMMAND} --end-time ${END_TIME}";
 COMMAND="${COMMAND} --period ${SECS}";
 COMMAND="${COMMAND} --statistics ${STATISTICS}";
-COMMAND="${COMMAND} --dimensions ${DIMENSIONS}";
+${DIMENSIONS} && COMMAND="${COMMAND} --dimensions ${DIMENSIONS}";
 
 if [[ "${PROFILE}" != "" ]];
 then
