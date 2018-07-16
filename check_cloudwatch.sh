@@ -520,7 +520,11 @@ COMMAND="${COMMAND} --start-time ${START_TIME}";
 COMMAND="${COMMAND} --end-time ${END_TIME}";
 COMMAND="${COMMAND} --period ${SECS}";
 COMMAND="${COMMAND} --statistics ${STATISTICS}";
-${DIMENSIONS} && COMMAND="${COMMAND} --dimensions ${DIMENSIONS}";
+
+if [[ "${DIMENSIONS}" != "" ]];
+then
+  COMMAND="${COMMAND} --dimensions ${DIMENSIONS}";
+fi
 
 if [[ "${PROFILE}" != "" ]];
 then
