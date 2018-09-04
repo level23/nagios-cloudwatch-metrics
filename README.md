@@ -76,10 +76,10 @@ See the help message:
     --http_proxy="x"       When you use a proxy to connect to the AWS Cli, you can use this option. See for more information
                            this link: http://docs.aws.amazon.com/cli/latest/userguide/cli-http-proxy.html
 
-    --https_proxy="x"       When you use a proxy to connect to the AWS Cli, you can use this option. See for more information
+    --https_proxy="x"      When you use a proxy to connect to the AWS Cli, you can use this option. See for more information
                            this link: http://docs.aws.amazon.com/cli/latest/userguide/cli-http-proxy.html
 
-    --last-known           When given, we will go back in time when do data was retrieved. Cloudwatch metrics are not always up to date.
+    --last-known           When given, we will fetch the last known values up to 20 minutes ago. Cloudwatch metrics are not always up to date.
                            By specifying this option we will walk back in 1 minute steps when no data is known for max 20 minutes.
                      
 
