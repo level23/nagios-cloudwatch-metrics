@@ -76,10 +76,11 @@ See the help message:
     --http_proxy="x"       When you use a proxy to connect to the AWS Cli, you can use this option. See for more information
                            this link: http://docs.aws.amazon.com/cli/latest/userguide/cli-http-proxy.html
 
-    --https_proxy="x"       When you use a proxy to connect to the AWS Cli, you can use this option. See for more information
+    --https_proxy="x"      When you use a proxy to connect to the AWS Cli, you can use this option. See for more information
                            this link: http://docs.aws.amazon.com/cli/latest/userguide/cli-http-proxy.html
 
-
+    --last-known           When given, we will fetch the last known values up to 20 minutes ago. Cloudwatch metrics are not always up to date.
+                           By specifying this option we will walk back in 1 minute steps when no data is known for max 20 minutes.
                      
 
 
@@ -243,6 +244,21 @@ define command {
 define command {
 	command_name	check_aws_rds
 	command_line	$USER1$/nagios-cloudwatch-metrics/check_cloudwatch.sh --region=eu-west-1 --namespace="RDS" --metric="$ARG1$" --statistics="Average" --mins=5 --dimensions="Name=DBClusterIdentifier,Value=$ARG2$ Name=Role,Value=$ARG3$" --warning=$ARG4$ --critical=$ARG5$
+}
+
+# Defined in HOST configuration are:
+# $HOSTALIAS$ = InstanceId
+# $HOSTNOTES$ = region
+#
+# Check check_aws_ec2
+# $ARG1$: Metric, for example CPUUtilization
+# $ARG2$: Data statistics. Possible values: Maximum, Minimum, Sum, Average
+# $ARG3$: Minutes timewindow
+# $ARG4$: Warning value
+# $ARG5$: Critical value
+define command {
+	command_name	check_aws_ec2
+	command_line	$USER1$/nagios-cloudwatch-metrics/check_cloudwatch.sh --timeout=30 --region="$HOSTNOTES$" --namespace="EC2" --metric="$ARG1$" --statistics="$ARG2$" --mins="$ARG3$" --dimensions="Name=InstanceId,Value=$HOSTALIAS$" --warning=$ARG4$ --critical=$ARG5$
 }
 ```
 

@@ -76,9 +76,11 @@ OPTIONS:
     --http_proxy="x"       When you use a proxy to connect to the AWS Cli, you can use this option. See for more information
                            this link: http://docs.aws.amazon.com/cli/latest/userguide/cli-http-proxy.html
 
-    --https_proxy="x"       When you use a proxy to connect to the AWS Cli, you can use this option. See for more information
+    --https_proxy="x"      When you use a proxy to connect to the AWS Cli, you can use this option. See for more information
                            this link: http://docs.aws.amazon.com/cli/latest/userguide/cli-http-proxy.html
 
+    --last-known           When given, we will fetch the last known values up to 20 minutes ago. Cloudwatch metrics are not always up to date.
+                           By specifying this option we will walk back in 1 minute steps when no data is known for max 20 minutes.
 
 
 Example threshold values:
@@ -335,6 +337,7 @@ DEFAULT_VALUE=""
 HTTP_PROXY=""
 HTTPS_PROXY=""
 TIMEOUTSEC=0
+LASTKNOWN=0
 
 #
 # Awesome parameter parsing, see http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
@@ -374,25 +377,6 @@ case ${i} in
 
 	--mins=* )
 	    MINUTES="${i#*=}"
-
-	    unamestr=`uname`
-	    STARTMINS=$((MINUTES+1))
-
-        # Create files to compare against
-	    if [[ "$unamestr" == 'Darwin' ]]; then
-	        START_TIME=$(date -v-${STARTMINS}M -u +'%Y-%m-%dT%H:%M:00')
-	    else
-	        START_TIME=$(date -u +'%Y-%m-%dT%H:%M:00' -d "-${STARTMINS} minutes")
-	    fi
-
-	    # Create files to compare against
-	    if [[ "$unamestr" == 'Darwin' ]]; then
-	        END_TIME=$(date -v-1M -u +'%Y-%m-%dT%H:%M:00')
-	    else
-	        END_TIME=$(date -u +'%Y-%m-%dT%H:%M:00' -d "-1 minutes")
-	    fi
-
-        SECS=$((60 * ${MINUTES}));
 	    shift ;
 	    ;;
 
@@ -413,6 +397,11 @@ case ${i} in
 
 	-v | --verbose )
 		VERBOSE=1
+		shift ;
+		;;
+
+	--last-known )
+		LASTKNOWN=1
 		shift ;
 		;;
 
@@ -504,64 +493,100 @@ then
 fi
 
 verbose "Namespace: ${NAMESPACE}";
-verbose "Start time: ${START_TIME}";
 verbose "Metric name: ${METRIC}";
-verbose "Stop time: ${END_TIME}";
-verbose "Minutes window: ${MINUTES}";
 verbose "Period (Seconds): ${SECS}";
 verbose "Dimensions: ${DIMENSIONS}";
 
-COMMAND="aws cloudwatch get-metric-statistics"
-COMMAND="${COMMAND} --region ${REGION}"
-COMMAND="${COMMAND} --namespace ${NAMESPACE}";
-COMMAND="${COMMAND} --metric-name ${METRIC}";
-COMMAND="${COMMAND} --output json";
-COMMAND="${COMMAND} --start-time ${START_TIME}";
-COMMAND="${COMMAND} --end-time ${END_TIME}";
-COMMAND="${COMMAND} --period ${SECS}";
-COMMAND="${COMMAND} --statistics ${STATISTICS}";
+LASTKNOWN_MINUTES=0
+while [[ ${LASTKNOWN_MINUTES} -lt 20 ]] ;
+do
+    unamestr=`uname`
+    STARTMINS=$((MINUTES+1+LASTKNOWN_MINUTES))
+    STOPMINS=$((1+LASTKNOWN_MINUTES))
 
-if [[ "${DIMENSIONS}" != "" ]];
-then
-  COMMAND="${COMMAND} --dimensions ${DIMENSIONS}";
-fi
-
-if [[ "${PROFILE}" != "" ]];
-then
-  COMMAND="${COMMAND} --profile ${PROFILE}";
-fi
-
-verbose "COMMAND: ${COMMAND}";
-verbose "----------------";
-
-if [[ ! -z "${HTTPS_PROXY}" ]];
-then
-    export  HTTPS_PROXY=${HTTPS_PROXY};
-elif [[ ! -z "${HTTP_PROXY}" ]];
-then
-  export  HTTP_PROXY=${HTTP_PROXY};
-fi
-
-# execute the command, optionally with a timeout check
-if [[ ${TIMEOUTSEC} -gt 0 ]];
-then
-    COMMAND="${TIMEOUTCMD} ${TIMEOUTSEC} ${COMMAND}";
-
-    RESULT=$(${COMMAND});
-
-    # command timed out ?
-    if [[ $? -eq 124 ]];
-    then
-        verbose "Our command timed out after ${TIMEOUTSEC} seconds. Return status UNKNOWN!";
-        echo "UNKNOWN - We failed to retrieve results within ${TIMEOUTSEC} seconds."
-        exit ${STATE_UNKNOWN};
+    # Create files to compare against
+    if [[ "$unamestr" == 'Darwin' ]]; then
+        START_TIME=$(date -v-${STARTMINS}M -u +'%Y-%m-%dT%H:%M:00')
+    else
+        START_TIME=$(date -u +'%Y-%m-%dT%H:%M:00' -d "-${STARTMINS} minutes")
     fi
-else
-    RESULT=$(${COMMAND});
-fi
+
+    # Create files to compare against
+    if [[ "$unamestr" == 'Darwin' ]]; then
+        END_TIME=$(date -v-${STOPMINS}M -u +'%Y-%m-%dT%H:%M:00')
+    else
+        END_TIME=$(date -u +'%Y-%m-%dT%H:%M:00' -d "-${STOPMINS} minutes")
+    fi
+
+    SECS=$((60 * ${MINUTES}));
+    verbose "---- ATTEMPT $((LASTKNOWN_MINUTES+1)) ----";
+    verbose "Start time: ${START_TIME}";
+    verbose "Stop time: ${END_TIME}";
+    verbose "Minutes window: ${MINUTES}";
+
+    COMMAND="aws cloudwatch get-metric-statistics"
+    COMMAND="${COMMAND} --region ${REGION}"
+    COMMAND="${COMMAND} --namespace ${NAMESPACE}";
+    COMMAND="${COMMAND} --metric-name ${METRIC}";
+    COMMAND="${COMMAND} --output json";
+    COMMAND="${COMMAND} --start-time ${START_TIME}";
+    COMMAND="${COMMAND} --end-time ${END_TIME}";
+    COMMAND="${COMMAND} --period ${SECS}";
+    COMMAND="${COMMAND} --statistics ${STATISTICS}";
+
+    if [[ "${DIMENSIONS}" != "" ]];
+    then
+      COMMAND="${COMMAND} --dimensions ${DIMENSIONS}";
+    fi
+
+    if [[ "${PROFILE}" != "" ]];
+    then
+      COMMAND="${COMMAND} --profile ${PROFILE}";
+    fi
+
+    verbose "COMMAND: ${COMMAND}";
+    verbose "----------------";
+
+    if [[ ! -z "${HTTPS_PROXY}" ]];
+    then
+        export  HTTPS_PROXY=${HTTPS_PROXY};
+    elif [[ ! -z "${HTTP_PROXY}" ]];
+    then
+      export  HTTP_PROXY=${HTTP_PROXY};
+    fi
+
+    # execute the command, optionally with a timeout check
+    if [[ ${TIMEOUTSEC} -gt 0 ]];
+    then
+        COMMAND="${TIMEOUTCMD} ${TIMEOUTSEC} ${COMMAND}";
+
+        RESULT=$(${COMMAND});
+
+        # command timed out ?
+        if [[ $? -eq 124 ]];
+        then
+            verbose "Our command timed out after ${TIMEOUTSEC} seconds. Return status UNKNOWN!";
+            echo "UNKNOWN - We failed to retrieve results within ${TIMEOUTSEC} seconds."
+            exit ${STATE_UNKNOWN};
+        fi
+    else
+        RESULT=$(${COMMAND});
+    fi
+
+    METRIC_VALUE=$(echo ${RESULT} | jq ".Datapoints[0].${STATISTICS}")
+
+    # No data found? Then go back in time
+    if [[  "${METRIC_VALUE}" == "null" ]] && [[ ${LASTKNOWN} -eq 1 ]];
+    then
+        LASTKNOWN_MINUTES=$((LASTKNOWN_MINUTES+1))
+        continue;
+    fi
+
+    # If here, just stop.
+    break;
+done
 
 
-METRIC_VALUE=$(echo ${RESULT} | jq ".Datapoints[0].${STATISTICS}")
 if [[ "${METRIC_VALUE}" == "null" ]] && [[ "${DEFAULT_VALUE}" != "" ]];
 then
     verbose "We did not receive any data. Lets work with our default value: ${DEFAULT_VALUE}";
