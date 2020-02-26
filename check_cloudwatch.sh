@@ -560,7 +560,7 @@ do
     then
         COMMAND="${TIMEOUTCMD} ${TIMEOUTSEC} ${COMMAND}";
 
-        RESULT=$(${COMMAND});
+        RESULT=$(eval ${COMMAND});
 
         # command timed out ?
         if [[ $? -eq 124 ]];
@@ -570,7 +570,7 @@ do
             exit ${STATE_UNKNOWN};
         fi
     else
-        RESULT=$(${COMMAND});
+        RESULT=$(eval ${COMMAND});
     fi
 
     METRIC_VALUE=$(echo ${RESULT} | jq ".Datapoints[0].${STATISTICS}")
