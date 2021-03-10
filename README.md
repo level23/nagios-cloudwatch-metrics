@@ -2,7 +2,7 @@
 
 This plugin allows you to check certain AWS Cloudwatch metrics and set alerts on certain values.
  
-The script is written in bash. It is tested on OSX and Ubuntu 16.04. 
+The script is written in bash. It is tested on OSX and Ubuntu 16.04 and 18.04. 
 
 This plugin fetches the data from X minutes back until now. 
 
